@@ -3,14 +3,18 @@ using UnityEngine;
 
 public class PayerMovement : MonoBehaviour {
     [SerializeField] private float speed = 10;
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private LayerMask wallLayer;
+    
     private Rigidbody2D body;
     private Animator animator;
-    private bool grounded;
+    private BoxCollider2D boxCollider;
 
     private void Awake () {
         // Get references to the components we need
         body = GetComponent<Rigidbody2D> ();
         animator = GetComponent<Animator> ();
+        boxCollider = GetComponent<BoxCollider2D> ();
     }
 
     private void Update () {
@@ -25,13 +29,13 @@ public class PayerMovement : MonoBehaviour {
         }
 
         // Jump if the player is pressing the space bar
-        if (Input.GetKeyDown (KeyCode.Space) && grounded) {
+        if (Input.GetKeyDown (KeyCode.Space) && isGrounded()) {
             Jump();
         }
 
         // Set animator parameters
         animator.SetBool("run", horizontalInput != 0);
-        animator.SetBool("grounded", grounded);
+        animator.SetBool("grounded", isGrounded());
     }
 
     /**
@@ -40,12 +44,18 @@ public class PayerMovement : MonoBehaviour {
     private void Jump () {
         body.linearVelocityY = speed;
         animator.SetTrigger("jump");
-        grounded = false;
     }
 
     private void OnCollisionEnter2D (Collision2D collision) {
-        if (collision.gameObject.tag == "Ground") {
-            grounded = true;
-        }
+    }
+
+    private bool isGrounded () {
+        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, Vector2.down, 0.1f, groundLayer);
+        return raycastHit.collider != null;
+    }
+
+    private bool onWall () {
+        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, new Vector2(transform.localScale.x, 0), 0.1f, wallLayer);
+        return raycastHit.collider != null;
     }
 }
